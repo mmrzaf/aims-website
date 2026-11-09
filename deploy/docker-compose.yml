@@ -4,7 +4,7 @@ services:
   website:
     image: ${WEBSITE_IMAGE:-aims-website}:${APP_IMAGE_TAG:?APP_IMAGE_TAG is required}
     expose:
-      - "80"
+      - "8080"
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -22,7 +22,7 @@ services:
       - "traefik.http.routers.${TRAEFIK_APP_NAME:-aims}-website.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
       - "traefik.http.routers.${TRAEFIK_APP_NAME:-aims}-website.tls=true"
       - "traefik.http.routers.${TRAEFIK_APP_NAME:-aims}-website.middlewares=${TRAEFIK_MIDDLEWARES:-security-headers@file,rate-limit@file}"
-      - "traefik.http.services.${TRAEFIK_APP_NAME:-aims}-website.loadbalancer.server.port=80"
+      - "traefik.http.services.${TRAEFIK_APP_NAME:-aims}-website.loadbalancer.server.port=8080"
 
 networks:
   proxy:

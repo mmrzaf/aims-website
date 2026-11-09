@@ -26,7 +26,6 @@ Requires Node 22.23.4 or newer.
 | `src/styles/` | Design tokens and styles (logical properties, so right-to-left needs no separate sheet) |
 | `public/` | Static files served as-is: `favicon.svg` and `images/` (generated, see Images) |
 | `images-src/` | Original artwork (PNG), not in git; converted into `public/images/` |
-| `nginx.conf` | Server settings for the Docker image |
 | `deploy/` | Compose file and env template for the server |
 
 `npm run verify` validates the catalogue: references between items, English/Persian parity, unique page titles, and empty text.
@@ -59,13 +58,13 @@ Fonts (IBM Plex Sans, Vazirmatn) are bundled from npm packages, and the site mak
 
 ## Deploy
 
-Pushes to `main` are built and deployed by Gitman (`.gitman.yml`): the image `aims-website:<version>` is built from `Dockerfile` (Node build, nginx runtime) and started with `deploy/docker-compose.yml` behind Traefik.
+Pushes to `main` are built and deployed by Gitman (`.gitman.yml`): the image `aims-website:<version>` is built from `Dockerfile` (Node build, `cerv` runtime) and started with `deploy/docker-compose.yml` behind Traefik.
 
 One-time server setup:
 
 1. Create the deploy directory (`DEPLOY_DIR` in `.gitman.yml`) and copy `deploy/.env.example` to `.env` there. Set `WEBSITE_DOMAIN`.
 2. Make sure the external Docker network `proxy` and the Traefik middlewares named in `TRAEFIK_MIDDLEWARES` exist.
-3. Make sure the runner has `node:22-bookworm-slim` and `nginx:1.27-alpine`.
+3. Make sure the runner has `node:22-bookworm-slim` and `cerv:1.0`.
 
 Company name, site URL and contact channels are build-time values: set them under `env` and `targets` in `.gitman.yml`.
 
@@ -73,7 +72,7 @@ To build locally:
 
 ```bash
 docker build -t aims-website --build-arg NPM_REGISTRY=https://registry.npmjs.org/ --build-arg PUBLIC_SITE_URL=http://localhost:8080 .
-docker run --rm -p 8080:80 aims-website
+docker run --rm -p 8080:8080 aims-website
 ```
 
 Alternatively upload `dist/` to any static host.

@@ -1,5 +1,5 @@
 ARG NODE_IMAGE=node:22-bookworm-slim
-ARG NGINX_IMAGE=nginx:1.27-alpine
+ARG CERV_IMAGE=cerv:1.0
 
 FROM ${NODE_IMAGE} AS build
 
@@ -39,12 +39,8 @@ COPY . ./
 
 RUN npm run build
 
-FROM ${NGINX_IMAGE} AS runtime
+FROM ${CERV_IMAGE} AS runtime
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/dist/ /usr/share/nginx/html/
+COPY --from=build /app/dist/ /srv/cerv/
 
-EXPOSE 80
-
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
-  CMD wget -q -O /dev/null http://127.0.0.1/ || exit 1
+EXPOSE 8080
