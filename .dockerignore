@@ -1,0 +1,16 @@
+node_modules
+dist
+.astro
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+images-src
+deploy
+docker-compose.yml
+Dockerfile
+.dockerignore
+.gitman.yml
+README.md
+*.log

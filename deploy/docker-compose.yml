@@ -1,0 +1,30 @@
+name: ${APP_COMPOSE_PROJECT:?APP_COMPOSE_PROJECT is required}
+
+services:
+  website:
+    image: ${WEBSITE_IMAGE:-aims-website}:${APP_IMAGE_TAG:?APP_IMAGE_TAG is required}
+    expose:
+      - "80"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - proxy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${PROXY_NETWORK:-proxy}"
+      - "traefik.http.routers.${TRAEFIK_APP_NAME:-aims}-website.rule=Host(`${WEBSITE_DOMAIN:?WEBSITE_DOMAIN is required}`)"
+      - "traefik.http.routers.${TRAEFIK_APP_NAME:-aims}-website.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.${TRAEFIK_APP_NAME:-aims}-website.tls=true"
+      - "traefik.http.routers.${TRAEFIK_APP_NAME:-aims}-website.middlewares=${TRAEFIK_MIDDLEWARES:-security-headers@file,rate-limit@file}"
+      - "traefik.http.services.${TRAEFIK_APP_NAME:-aims}-website.loadbalancer.server.port=80"
+
+networks:
+  proxy:
+    external: true
+    name: ${PROXY_NETWORK:-proxy}
