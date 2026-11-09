@@ -21,7 +21,7 @@ services:
       - "traefik.http.routers.${TRAEFIK_APP_NAME:-aims}-website.rule=Host(`${WEBSITE_DOMAIN:?WEBSITE_DOMAIN is required}`)"
       - "traefik.http.routers.${TRAEFIK_APP_NAME:-aims}-website.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
       - "traefik.http.routers.${TRAEFIK_APP_NAME:-aims}-website.tls=true"
-      - "traefik.http.routers.${TRAEFIK_APP_NAME:-aims}-website.middlewares=${TRAEFIK_MIDDLEWARES:-security-headers@file,rate-limit@file}"
+      - "traefik.http.routers.${TRAEFIK_APP_NAME:-aims}-website.middlewares=${TRAEFIK_MIDDLEWARES:-security-headers-indexable@file,rate-limit@file}"
       - "traefik.http.services.${TRAEFIK_APP_NAME:-aims}-website.loadbalancer.server.port=8080"
 
 networks:
