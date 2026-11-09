@@ -2,18 +2,16 @@
 import Base from '../layouts/Base.astro';
 import PageHeader from '../components/PageHeader.astro';
 import Icon from '../components/Icon.astro';
-import { getCatalog } from '../lib/catalog';
 import { t } from '../lib/i18n';
 import type { Lang } from '../lib/types';
 interface Props { lang: Lang }
 const { lang } = Astro.props;
-const c = getCatalog(lang);
 const labels = JSON.stringify({ none: t(lang, 'search.none'), unavailable: t(lang, 'search.unavailable') });
 ---
 <Base lang={lang} segments={['search']} title={t(lang, 'search.title')} unindexed>
   <PageHeader lang={lang} trail={[{ label: t(lang, 'search.title') }]} title={t(lang, 'search.title')} lead={t(lang, 'search.lead')} />
   <section class="section section--after-header">
-    <div class="container" data-labels={labels} id="search-root" data-lang={lang}>
+    <div class="container" data-labels={labels} data-index={`/search-index.${lang}.json`} id="search-root">
       <div class="search-box search-box--narrow">
         <Icon name="search" size={18} class="icon" />
         <input type="search" id="q" placeholder={t(lang, 'search.placeholder')} aria-label={t(lang, 'common.searchLabel')} autocomplete="off" />
@@ -24,42 +22,141 @@ const labels = JSON.stringify({ none: t(lang, 'search.none'), unavailable: t(lan
   </section>
 </Base>
 <script>
+  type Doc = { url: string; title: string; text: string };
+  type Entry = Doc & { nTitle: string; nText: string };
+
   const root = document.getElementById('search-root')!;
-  const L = JSON.parse(root.dataset.labels ?? '{}');
+  const labels = JSON.parse(root.dataset.labels ?? '{}');
   const input = document.getElementById('q') as HTMLInputElement;
   const list = document.getElementById('results')!;
   const msg = document.getElementById('msg')!;
-  let pf: any;
-  const load = async () => {
-    if (pf) return pf;
-    try {
-      const url = '/pagefind/pagefind.js';
-      pf = await import(/* @vite-ignore */ url);
-      await pf.options({ baseUrl: '/' });
-      return pf;
-    } catch { return null; }
+
+  // Persian and Arabic forms of the same letter must match, with or without ZWNJ.
+  const normalize = (value: string) =>
+    value
+      .toLowerCase()
+      .replace(/[\u064A\u0649]/g, 'ی')
+      .replace(/\u0643/g, 'ک')
+      .replace(/[\u200B-\u200F\uFEFF]/g, '')
+      .replace(/[\u064B-\u0652\u0670\u0640]/g, '');
+
+  const count = (text: string, term: string) => {
+    let found = 0;
+    let at = text.indexOf(term);
+    while (at >= 0 && found < 5) {
+      found += 1;
+      at = text.indexOf(term, at + term.length);
+    }
+    return found;
   };
+
+  let entries: Entry[] | null = null;
+  let pending: Promise<Entry[] | null> | null = null;
+  const load = async () => {
+    if (entries) return entries;
+    pending ??= (async () => {
+      try {
+        const response = await fetch(root.dataset.index!);
+        if (!response.ok) throw new Error(String(response.status));
+        const docs = (await response.json()) as Doc[];
+        entries = docs.map((doc) => ({ ...doc, nTitle: normalize(doc.title), nText: normalize(doc.text) }));
+        return entries;
+      } catch {
+        pending = null;
+        return null;
+      }
+    })();
+    return pending;
+  };
+
+  const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const excerpt = (text: string, query: string) => {
+    const words = query.split(/\s+/).filter((word) => word.length > 1);
+    const lower = text.toLowerCase();
+    let at = -1;
+    for (const word of words) {
+      const index = lower.indexOf(word.toLowerCase());
+      if (index >= 0 && (at < 0 || index < at)) at = index;
+    }
+    const start = Math.max(0, at - 70);
+    let segment = text.slice(start, start + 220);
+    if (start > 0) segment = `…${segment}`;
+    if (start + 220 < text.length) segment += '…';
+    const fragment = document.createDocumentFragment();
+    if (!words.length) {
+      fragment.append(segment);
+      return fragment;
+    }
+    const pattern = new RegExp(`(${words.map(escape).join('|')})`, 'gi');
+    let last = 0;
+    for (const match of segment.matchAll(pattern)) {
+      const index = match.index ?? 0;
+      fragment.append(segment.slice(last, index));
+      const mark = document.createElement('mark');
+      mark.textContent = match[0];
+      fragment.append(mark);
+      last = index + match[0].length;
+    }
+    fragment.append(segment.slice(last));
+    return fragment;
+  };
+
   let seq = 0;
-  const run = async (q: string) => {
+  const run = async (value: string) => {
     const id = ++seq;
-    list.replaceChildren(); msg.hidden = true;
-    if (!q.trim()) return;
-    const engine = await load();
-    if (!engine) { msg.textContent = L.unavailable; msg.hidden = false; return; }
-    const res = await engine.search(q);
+    list.replaceChildren();
+    msg.hidden = true;
+    const query = value.trim();
+    if (!query) return;
+    const docs = await load();
     if (id !== seq) return;
-    if (!res.results.length) { msg.textContent = L.none; msg.hidden = false; return; }
-    const items = await Promise.all(res.results.slice(0, 12).map((r: any) => r.data()));
-    if (id !== seq) return;
-    for (const d of items) {
-      const li = document.createElement('li');
-      const a = document.createElement('a'); a.href = d.url; a.textContent = (d.meta?.title ?? d.url).split(' · ')[0];
-      const p = document.createElement('p'); p.innerHTML = d.excerpt;
-      li.append(a, p); list.append(li);
+    if (!docs) {
+      msg.textContent = labels.unavailable;
+      msg.hidden = false;
+      return;
+    }
+    const terms = normalize(query).split(/\s+/).filter((term) => term.length > 1);
+    if (!terms.length) return;
+    const found: { doc: Entry; score: number }[] = [];
+    for (const doc of docs) {
+      let score = 0;
+      for (const term of terms) {
+        const title = doc.nTitle.includes(term);
+        const body = count(doc.nText, term);
+        if (!title && !body) {
+          score = -1;
+          break;
+        }
+        score += (title ? 20 : 0) + body;
+      }
+      if (score >= 0) found.push({ doc, score });
+    }
+    found.sort((a, b) => b.score - a.score || a.doc.text.length - b.doc.text.length);
+    if (!found.length) {
+      msg.textContent = labels.none;
+      msg.hidden = false;
+      return;
+    }
+    for (const { doc } of found.slice(0, 12)) {
+      const item = document.createElement('li');
+      const link = document.createElement('a');
+      link.href = doc.url;
+      link.textContent = doc.title;
+      const text = document.createElement('p');
+      text.append(excerpt(doc.text, query));
+      item.append(link, text);
+      list.append(item);
     }
   };
+
   let timer: number;
-  input.addEventListener('input', () => { clearTimeout(timer); timer = window.setTimeout(() => run(input.value), 180); });
+  input.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = window.setTimeout(() => run(input.value), 180);
+  });
   const initial = new URLSearchParams(location.search).get('q');
-  if (initial) { input.value = initial; run(initial); }
+  if (initial) {
+    input.value = initial;
+    run(initial);
+  }
 </script>

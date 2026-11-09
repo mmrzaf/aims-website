@@ -8,7 +8,7 @@
     "dev": "astro dev",
     "verify": "node scripts/verify-content.mjs",
     "images": "node scripts/process-images.mjs",
-    "build": "node scripts/verify-content.mjs && astro build && pagefind --site dist",
+    "build": "node scripts/verify-content.mjs && astro build && node scripts/build-search-index.mjs",
     "preview": "astro preview",
     "check-links": "node scripts/check-links.mjs"
   },
@@ -19,7 +19,6 @@
     "@astrojs/sitemap": "^3.7.4",
     "@fontsource-variable/vazirmatn": "^5.3.0",
     "@fontsource/ibm-plex-sans": "^5.3.0",
-    "astro": "^7.4.5",
-    "pagefind": "^1.6.0"
+    "astro": "^7.4.5"
   }
 }

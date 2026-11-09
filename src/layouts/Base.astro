@@ -60,7 +60,7 @@ const canonical = abs(localePath(lang, segments));
   <body>
     <a class="skip-link" href="#main">{t(lang, 'nav.skip')}</a>
     <Header lang={lang} segments={segments} />
-    <main id="main" data-pagefind-body={unindexed ? undefined : ''}>
+    <main id="main" data-search-body={unindexed ? undefined : ''}>
       <slot />
     </main>
     <Footer lang={lang} />

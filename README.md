@@ -1,6 +1,6 @@
 # Company website
 
-Bilingual (English `/`, Persian `/fa/`) static website for an industrial and enterprise software company. Built with Astro; search by Pagefind. No runtime server is needed.
+Bilingual (English `/`, Persian `/fa/`) static website for an industrial and enterprise software company. Built with Astro; the search index is generated at build time. No runtime server is needed.
 
 ## Run
 
