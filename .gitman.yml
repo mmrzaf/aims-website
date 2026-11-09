@@ -25,7 +25,7 @@ targets:
     branch: main
     env:
       DEPLOY_DIR: /srv/apps/aims-website
-      PUBLIC_SITE_URL: https://aims.waiotech.com
+      PUBLIC_SITE_URL: https://aimco.kdns.fr
 steps:
   - name: build website
     when: target
