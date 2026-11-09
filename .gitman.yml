@@ -1,0 +1,108 @@
+# AIMS website on Gitman. Pushes to main build the image as
+# aims-website:<version> and deploy it with docker compose. Other refs run nothing.
+image: docker:29-cli
+docker: true
+requires:
+  - node:22-bookworm-slim
+  - nginx:1.27-alpine
+images:
+  aims-website: {keep: 3}
+env:
+  DOCKER_BUILDKIT: "1"
+  BUILDKIT_PROGRESS: plain
+  NODE_IMAGE: node:22-bookworm-slim
+  NGINX_IMAGE: nginx:1.27-alpine
+  NPM_REGISTRY: https://package-mirror.liara.ir/repository/npm/
+  PUBLIC_COMPANY_NAME_EN: AIMS
+  PUBLIC_COMPANY_NAME_FA: آیمز
+  PUBLIC_CONTACT_EMAIL: ""
+  PUBLIC_CONTACT_PHONE: ""
+  PUBLIC_CONTACT_WHATSAPP: ""
+  PUBLIC_CONTACT_TELEGRAM: ""
+  PUBLIC_CONTACT_FORM_ENDPOINT: ""
+targets:
+  production:
+    branch: main
+    env:
+      DEPLOY_DIR: /srv/apps/aims-website
+      PUBLIC_SITE_URL: https://aims.waiotech.com
+steps:
+  - name: build website
+    when: target
+    run: |
+      set -eu
+      if docker image inspect "aims-website:$GITMAN_VERSION" >/dev/null 2>&1; then
+        test "$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "aims-website:$GITMAN_VERSION")" = "$GITMAN_COMMIT"
+        exit 0
+      fi
+      docker build --pull=false \
+        --build-arg NODE_IMAGE="$NODE_IMAGE" \
+        --build-arg NGINX_IMAGE="$NGINX_IMAGE" \
+        --build-arg NPM_REGISTRY="$NPM_REGISTRY" \
+        --build-arg PUBLIC_SITE_URL="$PUBLIC_SITE_URL" \
+        --build-arg PUBLIC_COMPANY_NAME_EN="$PUBLIC_COMPANY_NAME_EN" \
+        --build-arg PUBLIC_COMPANY_NAME_FA="$PUBLIC_COMPANY_NAME_FA" \
+        --build-arg PUBLIC_CONTACT_EMAIL="$PUBLIC_CONTACT_EMAIL" \
+        --build-arg PUBLIC_CONTACT_PHONE="$PUBLIC_CONTACT_PHONE" \
+        --build-arg PUBLIC_CONTACT_WHATSAPP="$PUBLIC_CONTACT_WHATSAPP" \
+        --build-arg PUBLIC_CONTACT_TELEGRAM="$PUBLIC_CONTACT_TELEGRAM" \
+        --build-arg PUBLIC_CONTACT_FORM_ENDPOINT="$PUBLIC_CONTACT_FORM_ENDPOINT" \
+        --label "org.opencontainers.image.revision=$GITMAN_COMMIT" \
+        --label "org.opencontainers.image.ref.name=$GITMAN_REF" \
+        --label "org.opencontainers.image.version=$GITMAN_VERSION" \
+        --tag "aims-website:$GITMAN_VERSION" \
+        -f Dockerfile \
+        .
+      echo "image=aims-website:$GITMAN_VERSION" >> "$GITMAN_SUMMARY"
+  - name: deploy
+    type: deploy
+    when: target
+    run: |
+      set -eu
+      compose="$(cat deploy/docker-compose.yml)"
+      docker run --rm --pull never \
+        --network host \
+        --mount type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock \
+        --mount type=bind,src="$DEPLOY_DIR",dst="$DEPLOY_DIR" \
+        --env DOCKER_HOST=unix:///var/run/docker.sock \
+        --env DEPLOY_DIR="$DEPLOY_DIR" \
+        --env IMAGE_TAG="$GITMAN_VERSION" \
+        --env COMPOSE_CONTENT="$compose" \
+        --env WEBSITE_URL="$PUBLIC_SITE_URL" \
+        docker:29-cli sh -c '
+          set -eu
+          if [ ! -f "$DEPLOY_DIR/.env" ]; then
+            echo "Missing $DEPLOY_DIR/.env" >&2
+            exit 1
+          fi
+          printf "%s\n" "$COMPOSE_CONTENT" > "$DEPLOY_DIR/docker-compose.yml"
+          if grep -q "^APP_IMAGE_TAG=" "$DEPLOY_DIR/.env"; then
+            sed -i "s#^APP_IMAGE_TAG=.*#APP_IMAGE_TAG=$IMAGE_TAG#" "$DEPLOY_DIR/.env"
+          else
+            printf "APP_IMAGE_TAG=%s\n" "$IMAGE_TAG" >> "$DEPLOY_DIR/.env"
+          fi
+          docker image inspect "aims-website:$IMAGE_TAG" >/dev/null
+          docker compose \
+            --project-name aims-website \
+            --project-directory "$DEPLOY_DIR" \
+            --env-file "$DEPLOY_DIR/.env" \
+            -f "$DEPLOY_DIR/docker-compose.yml" \
+            up -d --no-build --pull never --remove-orphans --wait --wait-timeout 120
+          for attempt in $(seq 1 20); do
+            if wget -q -O /dev/null "${WEBSITE_URL%/}/"; then
+              break
+            fi
+            if [ "$attempt" -eq 20 ]; then
+              echo "timed out waiting for ${WEBSITE_URL}" >&2
+              exit 1
+            fi
+            echo "waiting for ${WEBSITE_URL} (attempt $attempt/20)…" >&2
+            sleep 3
+          done
+          for route in / /fa/; do
+            wget -q -O /dev/null "${WEBSITE_URL%/}$route"
+          done
+          status="$(wget -S -O /dev/null "${WEBSITE_URL%/}/__aims_deployment_missing__/" 2>&1 || true)"
+          printf "%s\n" "$status" | grep -Eq "HTTP/[0-9.]+ 404"
+        '
+      echo "version=$GITMAN_VERSION" >> "$GITMAN_SUMMARY"
