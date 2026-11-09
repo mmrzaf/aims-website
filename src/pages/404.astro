@@ -1,0 +1,32 @@
+---
+import '@fontsource/ibm-plex-sans/latin-400.css';
+import '@fontsource/ibm-plex-sans/latin-600.css';
+import '@fontsource-variable/vazirmatn/wght.css';
+import '../styles/tokens.css';
+import '../styles/base.css';
+import '../styles/components.css';
+import '../styles/pages.css';
+import { t } from '../lib/i18n';
+import { site } from '../config/site.mjs';
+---
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" /><title>{t('en', 'notFound.title')} · {site.name.en}</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+</head>
+<body>
+  <main class="container notfound">
+    <p class="eyebrow">404</p>
+    <h1>{t('en', 'notFound.title')}</h1>
+    <p>{t('en', 'notFound.text')}</p>
+    <p class="button-row button-row--center"><a class="button button--primary" href="/">{t('en', 'notFound.home')}</a></p>
+    <section class="not-found__fa" lang="fa" dir="rtl">
+      <h2>{t('fa', 'notFound.title')}</h2>
+      <p>{t('fa', 'notFound.text')}</p>
+      <p class="button-row button-row--center"><a class="button button--ghost" href="/fa/">{t('fa', 'notFound.home')}</a></p>
+    </section>
+  </main>
+</body>
+</html>

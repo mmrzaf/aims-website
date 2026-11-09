@@ -1,0 +1,8 @@
+---
+import Icon from './Icon.astro';
+import { dirOf } from '../lib/i18n';
+import type { Lang } from '../config/languages';
+interface Props { lang: Lang; size?: number; class?: string }
+const { lang, size = 18, class: cls = '' } = Astro.props;
+---
+<Icon name="arrow" size={size} class={`${cls} ${dirOf(lang) === 'rtl' ? 'icon-flip' : ''}`.trim()} />

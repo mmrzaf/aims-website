@@ -1,0 +1,38 @@
+/* Motion: small, purposeful, and disabled for visitors who prefer reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+  .site-header { view-transition-name: site-header; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 0.18s; }
+
+  /* Hero entrance */
+  .hero .eyebrow, .hero h1, .hero .lead, .hero .button-row, .page-header .eyebrow, .page-header h1, .page-header .lead, .page-header .breadcrumbs {
+    animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .hero h1, .page-header h1 { animation-delay: 0.06s; }
+  .hero .lead, .page-header .lead { animation-delay: 0.14s; }
+  .hero .button-row { animation-delay: 0.22s; }
+  .hero__grid > .slot, .page-header__grid > div:last-child .slot { animation: settle 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) 0.12s both; }
+  /* The float uses the separate `translate` property so it never fights the entrance transform, and starts at rest. */
+  .hero__grid > .slot { animation: settle 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) 0.12s both, float 7s ease-in-out 0.92s infinite alternate; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  @keyframes settle { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes float { from { translate: 0 0; } to { translate: 0 -7px; } }
+
+  /* Scroll reveal (only when scripting is available) */
+  .js [data-reveal] { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1); transition-delay: calc(var(--i, 0) * 70ms); }
+  .js [data-reveal].is-in { opacity: 1; transform: none; }
+
+  /* Hover details */
+  .slot img { transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .industry-card:hover .slot img, .group-row:hover .slot img { transform: scale(1.04); }
+  .row-link .row-arrow, .group-row > svg, .solution-link .row-arrow { transition: transform 0.2s ease, color 0.15s ease; }
+  .row-link:hover .row-arrow, .group-row:hover > svg, .solution-link:hover .row-arrow { transform: translateX(4px); }
+  html[dir='rtl'] .row-link:hover .row-arrow, html[dir='rtl'] .group-row:hover > svg, html[dir='rtl'] .solution-link:hover .row-arrow { transform: translateX(-4px); }
+  .text-link svg { transition: transform 0.2s ease; }
+  .text-link:hover svg { transform: translateX(3px); }
+  html[dir='rtl'] .text-link:hover svg { transform: scaleX(-1) translateX(3px); }
+  .button { transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease; }
+  .button--primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgb(47 95 168 / 28%); }
+  .tag-list a { transition: border-color 0.15s ease, color 0.15s ease, transform 0.15s ease; }
+  .tag-list a:hover { transform: translateY(-1px); }
+}

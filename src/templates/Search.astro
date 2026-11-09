@@ -1,0 +1,65 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Icon from '../components/Icon.astro';
+import { getCatalog } from '../lib/catalog';
+import { t } from '../lib/i18n';
+import type { Lang } from '../lib/types';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const c = getCatalog(lang);
+const labels = JSON.stringify({ none: t(lang, 'search.none'), unavailable: t(lang, 'search.unavailable') });
+---
+<Base lang={lang} segments={['search']} title={t(lang, 'search.title')} unindexed>
+  <PageHeader lang={lang} trail={[{ label: t(lang, 'search.title') }]} title={t(lang, 'search.title')} lead={t(lang, 'search.lead')} />
+  <section class="section section--after-header">
+    <div class="container" data-labels={labels} id="search-root" data-lang={lang}>
+      <div class="search-box search-box--narrow">
+        <Icon name="search" size={18} class="icon" />
+        <input type="search" id="q" placeholder={t(lang, 'search.placeholder')} aria-label={t(lang, 'common.searchLabel')} autocomplete="off" />
+      </div>
+      <ul class="search-results" id="results"></ul>
+      <p class="empty-state" id="msg" hidden></p>
+    </div>
+  </section>
+</Base>
+<script>
+  const root = document.getElementById('search-root')!;
+  const L = JSON.parse(root.dataset.labels ?? '{}');
+  const input = document.getElementById('q') as HTMLInputElement;
+  const list = document.getElementById('results')!;
+  const msg = document.getElementById('msg')!;
+  let pf: any;
+  const load = async () => {
+    if (pf) return pf;
+    try {
+      const url = '/pagefind/pagefind.js';
+      pf = await import(/* @vite-ignore */ url);
+      await pf.options({ baseUrl: '/' });
+      return pf;
+    } catch { return null; }
+  };
+  let seq = 0;
+  const run = async (q: string) => {
+    const id = ++seq;
+    list.replaceChildren(); msg.hidden = true;
+    if (!q.trim()) return;
+    const engine = await load();
+    if (!engine) { msg.textContent = L.unavailable; msg.hidden = false; return; }
+    const res = await engine.search(q);
+    if (id !== seq) return;
+    if (!res.results.length) { msg.textContent = L.none; msg.hidden = false; return; }
+    const items = await Promise.all(res.results.slice(0, 12).map((r: any) => r.data()));
+    if (id !== seq) return;
+    for (const d of items) {
+      const li = document.createElement('li');
+      const a = document.createElement('a'); a.href = d.url; a.textContent = (d.meta?.title ?? d.url).split(' · ')[0];
+      const p = document.createElement('p'); p.innerHTML = d.excerpt;
+      li.append(a, p); list.append(li);
+    }
+  };
+  let timer: number;
+  input.addEventListener('input', () => { clearTimeout(timer); timer = window.setTimeout(() => run(input.value), 180); });
+  const initial = new URLSearchParams(location.search).get('q');
+  if (initial) { input.value = initial; run(initial); }
+</script>

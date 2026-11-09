@@ -1,0 +1,35 @@
+:root {
+  color-scheme: light;
+
+  --font-latin: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  --font-persian: 'Vazirmatn Variable', 'Vazirmatn', Tahoma, sans-serif;
+
+  --ink: #13233a;
+  --ink-body: #2b3c54;
+  --muted: #5a6b80;
+  --line: #e2e8f0;
+  --line-strong: #cbd5e1;
+  --surface: #f3f6fa;
+  --surface-strong: #e9eff7;
+  --white: #ffffff;
+
+  --navy: #1f3a5f;
+  --blue: #2f5fa8;
+  --blue-hover: #254f8f;
+  --blue-tint: #eaf0f9;
+  --blue-tint-strong: #dce6f5;
+  --focus: #5b8fd6;
+
+  --container: 1180px;
+  --gutter: clamp(20px, 4vw, 40px);
+  --header-height: 72px;
+
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 16px;
+
+  --shadow-s: 0 1px 2px rgb(19 35 58 / 6%);
+  --shadow-m: 0 12px 32px rgb(19 35 58 / 8%);
+
+  --section-space: clamp(56px, 8vw, 96px);
+}

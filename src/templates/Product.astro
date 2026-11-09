@@ -1,0 +1,62 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Img from '../components/Img.astro';
+import Faq from '../components/Faq.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { getCatalog } from '../lib/catalog';
+import { t } from '../lib/i18n';
+import { groupPath, industryPath, localePath, productPath, solutionPath } from '../lib/routes';
+import { productInterfaces } from '../lib/visuals';
+import type { Lang } from '../lib/types';
+
+interface Props { lang: Lang; id: string }
+const { lang, id } = Astro.props;
+const c = getCatalog(lang);
+const p = c.product(id);
+const g = c.group(p.groupId);
+const h = c.pages.home;
+const L = (k: string) => t(lang, `labels.${k}`);
+const selected = p.industryApplicability.mode === 'selected';
+const inds = p.industryApplicability.industryIds.map((i) => c.industry(i));
+const image = productInterfaces[p.id];
+---
+<Base lang={lang} segments={['software', p.groupId, p.slug]} title={p.seo.title} description={p.seo.description}>
+  <PageHeader lang={lang}
+    trail={[{ label: t(lang, 'nav.software'), href: localePath(lang, ['software']) }, { label: g.name, href: groupPath(lang, g.slug) }, { label: p.brand }]}
+    eyebrow={g.name} title={p.brand} chip={p.name} lead={p.shortDescription}>
+    <Fragment slot="aside"><Img name={image} eager alt="" /></Fragment>
+  </PageHeader>
+
+  <section class="section section--after-header">
+    <div class="container detail">
+      <div class="detail-main">
+        <section><h2>{L('definition')}</h2><p class="prose-lead">{p.definition}</p></section>
+        <section><h2>{L('problem')}</h2><p>{p.problem}</p></section>
+        <section><h2>{L('capabilities')}</h2><ul class="check-list two-col">{p.capabilities.map((x) => <li>{x}</li>)}</ul></section>
+        <section><h2>{L('workflow')}</h2><ol class="steps steps--list">{p.workflow.map((x) => <li class="step"><p>{x}</p></li>)}</ol></section>
+        <section><h2>{L('users')}</h2><div class="tag-list">{p.users.map((x) => <span>{x}</span>)}</div></section>
+        <section><h2>{L('connects')}</h2><div class="tag-list">{p.connects.map((x) => <span>{x}</span>)}</div></section>
+        {p.distinctions.length > 0 && (
+          <section><h2>{L('distinctions')}</h2>
+            <div class="distinction">{p.distinctions.map((d) => { const o = c.product(d.productId); return <div><a href={productPath(lang, o)}>{o.brand}</a><p>{d.text}</p></div>; })}</div>
+          </section>
+        )}
+        {p.faqs.length > 0 && <section><h2>{L('faq')}</h2><Faq items={p.faqs} /></section>}
+      </div>
+      <aside class="detail-aside">
+        <section>
+          <h2>{selected ? L('industries') : L('acrossIndustries')}</h2>
+          {selected
+            ? <ul>{inds.map((i) => <li><a href={industryPath(lang, i.slug)}>{i.name}</a></li>)}</ul>
+            : <p><a href={localePath(lang, ['industries'])}>{t(lang, 'nav.viewAllIndustries')}</a></p>}
+        </section>
+        {p.solutionIds.length > 0 && <section><h2>{L('solutions')}</h2>
+          <ul>{p.solutionIds.map((s) => { const x = c.solution(s); return <li><a href={solutionPath(lang, x.slug)}>{x.name}</a></li>; })}</ul></section>}
+        {p.relatedProductIds.length > 0 && <section><h2>{L('related')}</h2>
+          <ul>{p.relatedProductIds.map((r) => { const x = c.product(r); return <li><a href={productPath(lang, x)}>{x.brand}</a></li>; })}</ul></section>}
+      </aside>
+    </div>
+  </section>
+  <CtaBand lang={lang} title={h.cta.title} text={h.cta.text} />
+</Base>

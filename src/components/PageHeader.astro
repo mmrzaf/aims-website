@@ -1,0 +1,20 @@
+---
+import Breadcrumbs from './Breadcrumbs.astro';
+interface Props { lang: string; trail: Array<{ label: string; href?: string }>; eyebrow?: string; title: string; lead?: string; chip?: string }
+const { lang, trail, eyebrow, title, lead, chip } = Astro.props;
+const hasAside = Astro.slots.has('aside');
+---
+<header class="page-header">
+  <div class="container">
+    <Breadcrumbs lang={lang} trail={trail} />
+    <div class:list={['page-header__grid', { 'page-header__grid--plain': !hasAside }]}>
+      <div>
+        {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+        <h1>{title}{chip && <span class="chip">{chip}</span>}</h1>
+        {lead && <p class="lead">{lead}</p>}
+        <slot />
+      </div>
+      {hasAside && <div><slot name="aside" /></div>}
+    </div>
+  </div>
+</header>

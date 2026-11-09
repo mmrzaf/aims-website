@@ -1,0 +1,82 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+import ProductRows from '../components/ProductRows.astro';
+import Arrow from '../components/Arrow.astro';
+import Icon from '../components/Icon.astro';
+import { getCatalog } from '../lib/catalog';
+import { t } from '../lib/i18n';
+import { groupPath } from '../lib/routes';
+import type { Lang } from '../lib/types';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const c = getCatalog(lang);
+const p = c.pages.software;
+---
+<Base lang={lang} segments={['software']} title={p.seo.title} description={p.seo.description}>
+  <PageHeader lang={lang} trail={[{ label: t(lang, 'nav.software') }]} eyebrow={p.eyebrow} title={p.title} lead={p.lead} />
+  <section class="section section--after-header">
+    <div class="container">
+      <div class="toolbar" data-no-pagefind>
+        <div class="search-box">
+          <Icon name="search" size={18} class="icon" />
+          <input type="search" id="dir-search" placeholder={t(lang, 'common.searchPlaceholder')} aria-label={t(lang, 'common.searchLabel')} autocomplete="off" />
+        </div>
+        <div class="filters" role="group" aria-label={t(lang, 'nav.software')}>
+          <button type="button" class="filter" data-filter="all" aria-pressed="true">{t(lang, 'common.filterAll')}</button>
+          {c.groups.map((g) => <button type="button" class="filter" data-filter={g.id} aria-pressed="false">{g.name}</button>)}
+        </div>
+      </div>
+      {c.groups.map((g) => (
+        <section class="dir-group" data-group={g.id}>
+          <header>
+            <div><h2>{g.name}</h2><p>{g.summary}</p></div>
+            <a class="text-link" href={groupPath(lang, g.slug)}>{t(lang, 'common.explore')} <Arrow lang={lang} size={16} /></a>
+          </header>
+          {g.subgroups.map((sg) => (
+            <div class="dir-sub" data-sub>
+              <h3>{sg.name}</h3>
+              <ProductRows lang={lang} ids={sg.productIds} />
+            </div>
+          ))}
+        </section>
+      ))}
+      <p class="empty-state" id="dir-empty" hidden>{t(lang, 'common.noResults')}</p>
+    </div>
+  </section>
+</Base>
+<script>
+  const input = document.getElementById('dir-search') as HTMLInputElement | null;
+  const buttons = [...document.querySelectorAll<HTMLButtonElement>('.filter')];
+  const groups = [...document.querySelectorAll<HTMLElement>('.dir-group')];
+  const empty = document.getElementById('dir-empty');
+  let active = 'all';
+  const apply = () => {
+    const q = (input?.value ?? '').trim().toLowerCase();
+    let total = 0;
+    groups.forEach((g) => {
+      const groupOn = active === 'all' || g.dataset.group === active;
+      let count = 0;
+      g.querySelectorAll<HTMLElement>('[data-sub]').forEach((sub) => {
+        let subCount = 0;
+        sub.querySelectorAll<HTMLElement>('[data-product-row]').forEach((row) => {
+          const show = groupOn && (!q || (row.dataset.search ?? '').includes(q));
+          row.hidden = !show;
+          if (show) subCount++;
+        });
+        sub.hidden = subCount === 0;
+        count += subCount;
+      });
+      g.hidden = count === 0;
+      total += count;
+    });
+    if (empty) empty.hidden = total !== 0;
+  };
+  input?.addEventListener('input', apply);
+  buttons.forEach((b) => b.addEventListener('click', () => {
+    active = b.dataset.filter ?? 'all';
+    buttons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    apply();
+  }));
+</script>

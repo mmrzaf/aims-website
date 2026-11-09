@@ -1,0 +1,18 @@
+---
+import Arrow from './Arrow.astro';
+import { getCatalog } from '../lib/catalog';
+import { productPath } from '../lib/routes';
+import type { Lang } from '../lib/types';
+interface Props { lang: Lang; ids: string[] }
+const { lang, ids } = Astro.props;
+const c = getCatalog(lang);
+---
+<div class="row-list">
+  {ids.map((id) => { const p = c.product(id); return (
+    <a class="row-link" href={productPath(lang, p)} data-product-row data-search={`${p.brand} ${p.name} ${p.acronym ?? ''} ${p.shortDescription}`.toLowerCase()}>
+      <strong><span dir="ltr">{p.brand}</span><span class="acr">{p.name}</span></strong>
+      <span class="desc">{p.shortDescription}</span>
+      <span class="row-arrow"><Arrow lang={lang} /></span>
+    </a>
+  ); })}
+</div>

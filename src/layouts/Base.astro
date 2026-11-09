@@ -1,0 +1,87 @@
+---
+import '@fontsource/ibm-plex-sans/latin-400.css';
+import '@fontsource/ibm-plex-sans/latin-500.css';
+import '@fontsource/ibm-plex-sans/latin-600.css';
+import '@fontsource/ibm-plex-sans/latin-700.css';
+import '@fontsource-variable/vazirmatn/wght.css';
+import '../styles/tokens.css';
+import '../styles/base.css';
+import '../styles/layout.css';
+import '../styles/components.css';
+import '../styles/pages.css';
+import '../styles/motion.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { defaultLang, languages } from '../config/languages';
+import { dirOf, locales, t } from '../lib/i18n';
+import { localePath } from '../lib/routes';
+import type { Lang } from '../lib/types';
+import { site } from '../config/site.mjs';
+
+interface Props {
+  lang: Lang;
+  title?: string;
+  description?: string;
+  segments: string[];
+  unindexed?: boolean;
+}
+const { lang, title, description, segments, unindexed = false } = Astro.props;
+const siteLabel = site.name[lang];
+const fullTitle = title ? `${title} · ${siteLabel}` : siteLabel;
+const metaDescription = description ?? t(lang, 'meta.description');
+const abs = (path: string) => new URL(path, site.url).toString();
+const canonical = abs(localePath(lang, segments));
+---
+<!doctype html>
+<html lang={lang} dir={dirOf(lang)}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={metaDescription} />
+    <meta name="robots" content={unindexed ? 'noindex, follow' : 'index, follow'} />
+    <link rel="canonical" href={canonical} />
+    {locales.map((l) => <link rel="alternate" hreflang={l} href={abs(localePath(l, segments))} />)}
+    <link rel="alternate" hreflang="x-default" href={abs(localePath(defaultLang, segments))} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={siteLabel} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={metaDescription} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={languages[lang].ogLocale} />
+    <meta property="og:image" content={abs('/images/home/hero-1200.webp')} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={abs('/images/home/hero-1200.webp')} />
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script is:inline>document.documentElement.classList.add('js')</script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{t(lang, 'nav.skip')}</a>
+    <Header lang={lang} segments={segments} />
+    <main id="main" data-pagefind-body={unindexed ? undefined : ''}>
+      <slot />
+    </main>
+    <Footer lang={lang} />
+    <script>
+      const selector = '.section-head, .group-row, .industry-card, .solution-link, .split > *, .detail-main > section, .info-grid > div, .steps--flow .step, .cta-band__inner, .dir-group, .contact-card, .subsector';
+      const targets = [...document.querySelectorAll<HTMLElement>(selector)].filter((el) => !el.closest('.hero, .page-header, .site-header'));
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce || !('IntersectionObserver' in window)) {
+        document.documentElement.classList.remove('js');
+      } else {
+        const siblings = new Map<Element, number>();
+        const io = new IntersectionObserver((entries) => {
+          entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } });
+        }, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
+        targets.forEach((el) => {
+          const parent = el.parentElement!;
+          const n = siblings.get(parent) ?? 0; siblings.set(parent, n + 1);
+          el.setAttribute('data-reveal', ''); el.style.setProperty('--i', String(Math.min(n, 5)));
+          io.observe(el);
+        });
+      }
+    </script>
+  </body>
+</html>

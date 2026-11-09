@@ -1,0 +1,46 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { getCatalog } from '../lib/catalog';
+import { defaultLang } from '../config/languages';
+import { locales } from '../lib/i18n';
+import { buildRoutes } from '../lib/routes';
+import type { Lang, Route } from '../lib/types';
+import Home from '../templates/Home.astro';
+import Software from '../templates/Software.astro';
+import Group from '../templates/Group.astro';
+import Product from '../templates/Product.astro';
+import Industries from '../templates/Industries.astro';
+import Industry from '../templates/Industry.astro';
+import Solutions from '../templates/Solutions.astro';
+import Solution from '../templates/Solution.astro';
+import InfoPage from '../templates/InfoPage.astro';
+import Contact from '../templates/Contact.astro';
+import Search from '../templates/Search.astro';
+
+export const getStaticPaths = (async () => {
+  const catalog = getCatalog('en');
+  const routes = buildRoutes(catalog);
+  return locales.flatMap((lang) => routes.map((route) => {
+    const parts = lang === defaultLang ? route.segments : [lang, ...route.segments];
+    return { params: { path: parts.length ? parts.join('/') : undefined }, props: { lang, route } };
+  }));
+}) satisfies GetStaticPaths;
+
+interface Props { lang: Lang; route: Route }
+const { lang, route } = Astro.props;
+const id = route.id ?? '';
+---
+{route.kind==='home' && <Home lang={lang}/>}
+{route.kind==='software' && <Software lang={lang}/>}
+{route.kind==='group' && <Group lang={lang} id={id}/>}
+{route.kind==='product' && <Product lang={lang} id={id}/>}
+{route.kind==='industries' && <Industries lang={lang}/>}
+{route.kind==='industry' && <Industry lang={lang} id={id}/>}
+{route.kind==='solutions' && <Solutions lang={lang}/>}
+{route.kind==='solution' && <Solution lang={lang} id={id}/>}
+{route.kind==='how' && <InfoPage lang={lang} kind="how"/>}
+{route.kind==='platform' && <InfoPage lang={lang} kind="platform"/>}
+{route.kind==='about' && <InfoPage lang={lang} kind="about"/>}
+{route.kind==='privacy' && <InfoPage lang={lang} kind="privacy"/>}
+{route.kind==='contact' && <Contact lang={lang}/>}
+{route.kind==='search' && <Search lang={lang}/>}

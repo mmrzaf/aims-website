@@ -1,0 +1,32 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Img from '../components/Img.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { getCatalog } from '../lib/catalog';
+import { t } from '../lib/i18n';
+import { industryPath } from '../lib/routes';
+import { industryImages } from '../lib/visuals';
+import type { Lang } from '../lib/types';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const c = getCatalog(lang);
+const p = c.pages.industries;
+const h = c.pages.home;
+---
+<Base lang={lang} segments={['industries']} title={p.seo.title} description={p.seo.description}>
+  <PageHeader lang={lang} trail={[{ label: t(lang, 'nav.industries') }]} eyebrow={p.eyebrow} title={p.title} lead={p.lead} />
+  <section class="section section--after-header">
+    <div class="container">
+      <div class="industry-grid">
+        {c.industries.map((i) => (
+          <a class="industry-card" href={industryPath(lang, i.slug)}>
+            <Img name={industryImages[i.id]} sizes="(min-width: 1000px) 280px, 50vw" />
+            <h3>{i.name}</h3><p>{i.summary}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+  <CtaBand lang={lang} title={h.cta.title} text={h.cta.text} />
+</Base>

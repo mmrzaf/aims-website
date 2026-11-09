@@ -1,0 +1,41 @@
+---
+import Brand from './Brand.astro';
+import { site } from '../config/site.mjs';
+import { getCatalog } from '../lib/catalog';
+import { t } from '../lib/i18n';
+import { groupPath, industryPath, localePath } from '../lib/routes';
+import type { Lang } from '../lib/types';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const c = getCatalog(lang);
+const year = new Date().getFullYear();
+const company = [
+  ['about', 'about', 'about'], ['how', 'how-we-work', 'howWeWork'], ['platform', 'platform', 'platform'], ['contact', 'contact', 'contact'],
+] as const;
+---
+<footer class="site-footer">
+  <div class="container footer-top">
+    <div class="footer-about">
+      <Brand lang={lang} />
+      <p>{t(lang, 'footer.blurb')}</p>
+    </div>
+    <div class="footer-col">
+      <h2>{t(lang, 'footer.software')}</h2>
+      <ul>{c.groups.map((g) => <li><a href={groupPath(lang, g.slug)}>{g.name}</a></li>)}</ul>
+    </div>
+    <div class="footer-col">
+      <h2>{t(lang, 'footer.industries')}</h2>
+      <ul>{c.industries.slice(0, 6).map((i) => <li><a href={industryPath(lang, i.slug)}>{i.name}</a></li>)}
+        <li><a href={localePath(lang, ['industries'])}>{t(lang, 'common.viewAll')}</a></li></ul>
+    </div>
+    <div class="footer-col">
+      <h2>{t(lang, 'footer.company')}</h2>
+      <ul>{company.map(([, seg, key]) => <li><a href={localePath(lang, [seg])}>{t(lang, `nav.${key}`)}</a></li>)}</ul>
+    </div>
+  </div>
+  <div class="container footer-bottom">
+    <span>© {year} {site.name[lang]}. {t(lang, 'footer.rights')}</span>
+    <a href={localePath(lang, ['privacy'])}>{t(lang, 'footer.privacy')}</a>
+  </div>
+</footer>

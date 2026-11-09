@@ -1,0 +1,59 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Img from '../components/Img.astro';
+import Steps from '../components/Steps.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { getCatalog } from '../lib/catalog';
+import { t } from '../lib/i18n';
+import { platformImages } from '../lib/visuals';
+import type { Lang } from '../lib/types';
+
+interface Props { lang: Lang; kind: 'platform' | 'how' | 'about' | 'privacy' }
+const { lang, kind } = Astro.props;
+const c = getCatalog(lang);
+const h = c.pages.home;
+const segment = { platform: 'platform', how: 'how-we-work', about: 'about', privacy: 'privacy' }[kind];
+const p = c.pages[kind];
+const sections = 'sections' in p ? p.sections : [];
+const platformPics = [platformImages.baseAndModules, platformImages.integrationHub, platformImages.deployment];
+---
+<Base lang={lang} segments={[segment]} title={p.seo.title} description={p.seo.description}>
+  <PageHeader lang={lang} trail={[{ label: p.eyebrow }]} eyebrow={p.eyebrow} title={p.title} lead={p.lead}>
+    {kind === 'platform' && <Fragment slot="aside"><Img name={platformImages.baseAndModules} eager /></Fragment>}
+  </PageHeader>
+
+  {kind === 'platform' && (
+    <section class="section section--after-header"><div class="container">
+      <div class="info-grid" data-count={sections.length}>{sections.map((s) => <div><h2>{s.title}</h2><p>{s.text}</p></div>)}</div>
+      <div class="split split--spaced">
+        <Img name={platformImages.integrationHub} />
+        <Img name={platformImages.deployment} />
+      </div>
+    </div></section>
+  )}
+
+  {kind === 'how' && 'steps' in p && (
+    <section class="section section--after-header"><div class="container">
+      <Steps items={p.steps} flow />
+      <div class="prose prose--spaced">
+        <h2>{p.needTitle}</h2>
+        <ul class="check-list">{p.need.map((x) => <li>{x}</li>)}</ul>
+      </div>
+    </div></section>
+  )}
+
+  {kind === 'about' && (
+    <section class="section section--after-header"><div class="container">
+      <div class="info-grid" data-count={sections.length}>{sections.map((s) => <div><h2>{s.title}</h2><p>{s.text}</p></div>)}</div>
+    </div></section>
+  )}
+
+  {kind === 'privacy' && (
+    <section class="section section--after-header"><div class="container">
+      <div class="prose">{sections.map((s) => <><h2>{s.title}</h2><p>{s.text}</p></>)}</div>
+    </div></section>
+  )}
+
+  {kind !== 'privacy' && <CtaBand lang={lang} title={h.cta.title} text={h.cta.text} />}
+</Base>

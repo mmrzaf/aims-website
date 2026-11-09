@@ -1,0 +1,23 @@
+---
+import Icon from './Icon.astro';
+import { hasImage } from '../lib/images';
+
+interface Props { name: string; alt?: string; ratio?: string; eager?: boolean; sizes?: string; class?: string; small?: boolean }
+const { name, alt = '', ratio = '3 / 2', eager = false, sizes = '(min-width: 900px) 560px, 100vw', class: cls = '', small = false } = Astro.props;
+
+const base = `/images/${name}`;
+const hasFile = hasImage(name);
+---
+{hasFile ? (
+  <figure class:list={['slot', cls]} style={`aspect-ratio:${ratio}`}>
+    {small ? (
+      <img src={`${base}-640.webp`} alt={alt} width="640" height="427" loading={eager ? 'eager' : 'lazy'} decoding="async" />
+    ) : (
+      <img src={`${base}-1200.webp`} srcset={`${base}-640.webp 640w, ${base}-1200.webp 1200w`} sizes={sizes} alt={alt} width="1200" height="800" loading={eager ? 'eager' : 'lazy'} decoding="async" />
+    )}
+  </figure>
+) : (
+  <div class:list={['slot', 'slot--placeholder', cls]} style={`aspect-ratio:${ratio}`} role="img" aria-label={alt || undefined} aria-hidden={alt ? undefined : 'true'}>
+    <span class="slot__mark"><Icon name="image" size={44} /></span>
+  </div>
+)}

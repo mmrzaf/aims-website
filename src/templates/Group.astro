@@ -1,0 +1,47 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+import ProductRows from '../components/ProductRows.astro';
+import Img from '../components/Img.astro';
+import CtaBand from '../components/CtaBand.astro';
+import Arrow from '../components/Arrow.astro';
+import { getCatalog } from '../lib/catalog';
+import { t } from '../lib/i18n';
+import { industryPath, localePath } from '../lib/routes';
+import { groupImages } from '../lib/visuals';
+import type { Lang } from '../lib/types';
+
+interface Props { lang: Lang; id: string }
+const { lang, id } = Astro.props;
+const c = getCatalog(lang);
+const g = c.group(id);
+const h = c.pages.home;
+---
+<Base lang={lang} segments={['software', g.slug]} title={g.seo.title} description={g.seo.description}>
+  <PageHeader lang={lang} trail={[{ label: t(lang, 'nav.software'), href: localePath(lang, ['software']) }, { label: g.name }]} eyebrow={t(lang, 'nav.software')} title={g.name} lead={g.summary}>
+    <Fragment slot="aside"><Img name={groupImages[g.id]} eager /></Fragment>
+  </PageHeader>
+  <section class="section section--after-header">
+    <div class="container detail">
+      <div class="detail-main">
+        <section><p class="prose-lead">{g.introduction}</p></section>
+        <section>
+          <h2>{t(lang, 'labels.systemsInGroup')}</h2>
+          {g.subgroups.map((sg) => (
+            <div class="dir-sub">
+              <h3>{sg.name}</h3>
+              <ProductRows lang={lang} ids={sg.productIds} />
+            </div>
+          ))}
+        </section>
+      </div>
+      <aside class="detail-aside">
+        <section>
+          <h2>{t(lang, 'labels.industries')}</h2>
+          <ul>{g.relatedIndustryIds.map((iid) => { const i = c.industry(iid); return <li><a href={industryPath(lang, i.slug)}>{i.name}</a></li>; })}</ul>
+        </section>
+      </aside>
+    </div>
+  </section>
+  <CtaBand lang={lang} title={h.cta.title} text={h.cta.text} />
+</Base>

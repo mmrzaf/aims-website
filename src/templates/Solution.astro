@@ -1,0 +1,38 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+import ProductRows from '../components/ProductRows.astro';
+import Faq from '../components/Faq.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { getCatalog } from '../lib/catalog';
+import { t } from '../lib/i18n';
+import { industryPath, localePath } from '../lib/routes';
+import type { Lang } from '../lib/types';
+interface Props { lang: Lang; id: string }
+const { lang, id } = Astro.props;
+const c = getCatalog(lang);
+const s = c.solution(id);
+const h = c.pages.home;
+const L = (k: string) => t(lang, `labels.${k}`);
+---
+<Base lang={lang} segments={['solutions', s.slug]} title={s.seo.title} description={s.seo.description}>
+  <PageHeader lang={lang} trail={[{ label: t(lang, 'nav.solutions'), href: localePath(lang, ['solutions']) }, { label: s.name }]} eyebrow={t(lang, 'nav.solutions')} title={s.name} lead={s.summary} />
+  <section class="section section--after-header">
+    <div class="container detail">
+      <div class="detail-main">
+        <section><p class="prose-lead">{s.problem}</p></section>
+        <section><h2>{L('steps')}</h2><ol class="steps steps--list">{s.steps.map((x) => <li class="step"><p>{x}</p></li>)}</ol></section>
+        <section><h2>{L('stakeholders')}</h2><div class="tag-list">{s.stakeholders.map((x) => <span>{x}</span>)}</div></section>
+        <section><h2>{L('outcomes')}</h2><ul class="check-list">{s.outcomes.map((x) => <li>{x}</li>)}</ul></section>
+        <section><h2>{L('software')}</h2><ProductRows lang={lang} ids={s.productIds} /></section>
+        <section><h2>{L('integration')}</h2><ul class="check-list">{s.integration.map((x) => <li>{x}</li>)}</ul></section>
+        {s.faqs.length > 0 && <section><h2>{L('faq')}</h2><Faq items={s.faqs} /></section>}
+      </div>
+      <aside class="detail-aside">
+        <section><h2>{L('industriesServed')}</h2>
+          <ul>{s.industryIds.map((x) => { const i = c.industry(x); return <li><a href={industryPath(lang, i.slug)}>{i.name}</a></li>; })}</ul></section>
+      </aside>
+    </div>
+  </section>
+  <CtaBand lang={lang} title={h.cta.title} text={h.cta.text} />
+</Base>

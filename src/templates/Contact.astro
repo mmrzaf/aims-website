@@ -1,0 +1,94 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+import { getCatalog } from '../lib/catalog';
+import { channels } from '../lib/contact';
+import { t } from '../lib/i18n';
+import { site } from '../config/site.mjs';
+import type { Lang } from '../lib/types';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const c = getCatalog(lang);
+const p = c.pages.contact;
+const f = (k: string) => t(lang, `form.${k}`);
+const list = channels();
+const strings = JSON.stringify({
+  success: f('success'), error: f('error'), mailto: f('mailtoOpened'), sending: f('sending'), send: f('send'),
+  name: f('requiredName'), email: f('requiredEmail'), message: f('requiredMessage'),
+});
+---
+<Base lang={lang} segments={['contact']} title={p.seo.title} description={p.seo.description}>
+  <PageHeader lang={lang} trail={[{ label: p.eyebrow }]} eyebrow={p.eyebrow} title={p.title} lead={p.lead} />
+  <section class="section section--after-header">
+    <div class="container contact-grid">
+      <form class="form" id="contact-form" novalidate data-endpoint={site.contact.formEndpoint} data-email={site.contact.email} data-strings={strings}>
+        <div class="form-row">
+          <div class="field"><label for="cf-name">{f('name')}</label><input id="cf-name" name="name" autocomplete="name" required /><div class="error" data-error="name"></div></div>
+          <div class="field"><label for="cf-email">{f('email')}</label><input id="cf-email" name="email" type="email" autocomplete="email" required /><div class="error" data-error="email"></div></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label for="cf-company">{f('company')} <span class="opt">({f('optional')})</span></label><input id="cf-company" name="company" autocomplete="organization" /></div>
+          <div class="field"><label for="cf-phone">{f('phone')} <span class="opt">({f('optional')})</span></label><input id="cf-phone" name="phone" type="tel" autocomplete="tel" /></div>
+        </div>
+        <div class="field"><label for="cf-message">{f('message')}</label><textarea id="cf-message" name="message" required></textarea><div class="error" data-error="message"></div></div>
+        <div class="hp" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off" /></label></div>
+        <div class="form-status" id="cf-status" role="status" aria-live="polite" hidden></div>
+        <div><button class="button button--primary" type="submit">{f('send')}</button></div>
+      </form>
+      <aside>
+        <div class="contact-card">
+          <h2>{f('directTitle')}</h2>
+          {list.length > 0 ? (
+            <ul>{list.map((ch) => <li><a href={ch.href} {...(ch.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}><span>{f(ch.key === 'email' ? 'email_' : ch.key === 'phone' ? 'phone_' : ch.key)}</span><strong dir="ltr">{ch.display}</strong></a></li>)}</ul>
+          ) : <p class="muted">{f('none')}</p>}
+        </div>
+        <div class="prose prose--aside">
+          <h2>{p.includeTitle}</h2>
+          <ul class="check-list">{p.include.map((x) => <li>{x}</li>)}</ul>
+        </div>
+      </aside>
+    </div>
+  </section>
+</Base>
+<script>
+  const form = document.getElementById('contact-form') as HTMLFormElement | null;
+  if (form) {
+    const S = JSON.parse(form.dataset.strings ?? '{}');
+    const status = document.getElementById('cf-status')!;
+    const btn = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
+    const show = (state: 'success' | 'error', msg: string) => { status.hidden = false; status.dataset.state = state; status.textContent = msg; };
+    const mark = (name: string, msg: string) => {
+      const input = form.elements.namedItem(name) as HTMLInputElement;
+      form.querySelector<HTMLElement>(`[data-error="${name}"]`)!.textContent = msg;
+      if (msg) input.setAttribute('aria-invalid', 'true'); else input.removeAttribute('aria-invalid');
+      return !msg;
+    };
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const v = Object.fromEntries(new FormData(form)) as Record<string, string>;
+      if (v.website) return;
+      const ok = [
+        mark('name', v.name.trim() ? '' : S.name),
+        mark('email', /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email.trim()) ? '' : S.email),
+        mark('message', v.message.trim() ? '' : S.message),
+      ].every(Boolean);
+      if (!ok) { (form.querySelector('[aria-invalid=true]') as HTMLElement)?.focus(); return; }
+      const payload = { name: v.name.trim(), email: v.email.trim(), company: v.company.trim(), phone: v.phone.trim(), message: v.message.trim() };
+      const endpoint = form.dataset.endpoint;
+      const email = form.dataset.email;
+      if (endpoint) {
+        btn.disabled = true; btn.textContent = S.sending;
+        try {
+          const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(payload) });
+          if (!res.ok) throw new Error(String(res.status));
+          form.reset(); show('success', S.success);
+        } catch { show('error', S.error); }
+        finally { btn.disabled = false; btn.textContent = S.send; }
+      } else if (email) {
+        const body = `${payload.message}\n\n${payload.name}${payload.company ? ` / ${payload.company}` : ''}\n${payload.email}${payload.phone ? `\n${payload.phone}` : ''}`;
+        window.location.href = `mailto:${email}?subject=${encodeURIComponent(payload.name)}&body=${encodeURIComponent(body)}`;
+        show('success', S.mailto);
+      } else show('error', S.error);
+    });
+  }
+</script>

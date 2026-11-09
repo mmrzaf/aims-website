@@ -1,0 +1,111 @@
+---
+import Base from '../layouts/Base.astro';
+import Img from '../components/Img.astro';
+import Arrow from '../components/Arrow.astro';
+import Steps from '../components/Steps.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { getCatalog } from '../lib/catalog';
+import { number, t } from '../lib/i18n';
+import { groupPath, industryPath, localePath, solutionPath } from '../lib/routes';
+import { groupImages, heroImage, industryImages, platformImages } from '../lib/visuals';
+import type { Lang } from '../lib/types';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const c = getCatalog(lang);
+const h = c.pages.home;
+---
+<Base lang={lang} segments={[]} title={h.seo.title} description={h.seo.description}>
+  <section class="hero snap">
+    <div class="container hero__grid">
+      <div>
+        <p class="eyebrow">{h.eyebrow}</p>
+        <h1>{h.title}</h1>
+        <p class="lead">{h.lead}</p>
+        <div class="button-row">
+          <a class="button button--primary" href={localePath(lang, ['software'])}>{h.primaryCta}</a>
+          <a class="button button--ghost" href={localePath(lang, ['contact'])}>{h.secondaryCta}</a>
+        </div>
+      </div>
+      <Img name={heroImage} ratio="3 / 2" eager sizes="(min-width: 900px) 600px, 100vw" />
+    </div>
+    <div class="container">
+      <div class="facts">
+        {h.facts.map((f) => <div class="fact"><h3>{f.title}</h3><p>{f.text}</p></div>)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section snap">
+    <div class="container">
+      <div class="section-head">
+        <div><p class="eyebrow">{h.groups.eyebrow}</p><h2>{h.groups.title}</h2><p>{h.groups.lead}</p></div>
+        <a class="text-link" href={localePath(lang, ['software'])}>{t(lang, 'nav.viewAllSoftware')} <Arrow lang={lang} size={16} /></a>
+      </div>
+      <div class="group-rows">
+        {c.groups.map((g) => (
+          <a class="group-row" href={groupPath(lang, g.slug)}>
+            <Img name={groupImages[g.id]} sizes="220px" />
+            <div>
+              <h3>{g.name}</h3>
+              <p>{g.summary}</p>
+              <p class="group-row__meta">{number(lang, g.productIds.length)} {t(lang, 'common.systems')}</p>
+            </div>
+            <Arrow lang={lang} size={22} />
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--soft snap">
+    <div class="container">
+      <div class="section-head">
+        <div><p class="eyebrow">{h.industries.eyebrow}</p><h2>{h.industries.title}</h2><p>{h.industries.lead}</p></div>
+        <a class="text-link" href={localePath(lang, ['industries'])}>{t(lang, 'nav.viewAllIndustries')} <Arrow lang={lang} size={16} /></a>
+      </div>
+      <div class="industry-grid">
+        {c.industries.map((i) => (
+          <a class="industry-card" href={industryPath(lang, i.slug)}>
+            <Img name={industryImages[i.id]} sizes="(min-width: 1000px) 280px, 50vw" />
+            <h3>{i.name}</h3>
+            <p>{i.summary}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section snap">
+    <div class="container split">
+      <div>
+        <p class="eyebrow">{h.approach.eyebrow}</p>
+        <h2>{h.approach.title}</h2>
+        <p class="lead">{h.approach.lead}</p>
+        <Steps items={h.approach.steps} />
+        <p class="section-link"><a class="text-link" href={localePath(lang, ['how-we-work'])}>{h.approach.link} <Arrow lang={lang} size={16} /></a></p>
+      </div>
+      <Img name={platformImages.baseAndModules} />
+    </div>
+  </section>
+
+  <section class="section section--soft snap">
+    <div class="container">
+      <div class="section-head">
+        <div><p class="eyebrow">{h.solutions.eyebrow}</p><h2>{h.solutions.title}</h2><p>{h.solutions.lead}</p></div>
+        <a class="text-link" href={localePath(lang, ['solutions'])}>{t(lang, 'nav.viewAllSolutions')} <Arrow lang={lang} size={16} /></a>
+      </div>
+      <div class="solution-grid">
+        {c.solutions.slice(0, 6).map((s) => (
+          <a class="solution-link" href={solutionPath(lang, s.slug)}>
+            <h3>{s.name}<span class="row-arrow"><Arrow lang={lang} size={18} /></span></h3>
+            <p>{s.summary}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <CtaBand lang={lang} title={h.cta.title} text={h.cta.text} />
+
+</Base>

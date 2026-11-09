@@ -1,0 +1,44 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeader from '../components/PageHeader.astro';
+import ProductRows from '../components/ProductRows.astro';
+import Img from '../components/Img.astro';
+import Faq from '../components/Faq.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { getCatalog } from '../lib/catalog';
+import { t } from '../lib/i18n';
+import { localePath, solutionPath } from '../lib/routes';
+import { industryImages } from '../lib/visuals';
+import type { Lang } from '../lib/types';
+interface Props { lang: Lang; id: string }
+const { lang, id } = Astro.props;
+const c = getCatalog(lang);
+const i = c.industry(id);
+const h = c.pages.home;
+const L = (k: string) => t(lang, `labels.${k}`);
+---
+<Base lang={lang} segments={['industries', i.slug]} title={i.seo.title} description={i.seo.description}>
+  <PageHeader lang={lang} trail={[{ label: t(lang, 'nav.industries'), href: localePath(lang, ['industries']) }, { label: i.name }]} eyebrow={t(lang, 'nav.industries')} title={i.name} lead={i.summary}>
+    <Fragment slot="aside"><Img name={industryImages[i.id]} eager /></Fragment>
+  </PageHeader>
+  <section class="section section--after-header">
+    <div class="container detail">
+      <div class="detail-main">
+        <section><p class="prose-lead">{i.overview}</p></section>
+        <section><h2>{L('subsectors')}</h2>
+          <div class="subsector-grid">{i.subsectors.map((s) => <div class="subsector"><h3>{s.name}</h3><p>{s.description}</p></div>)}</div>
+        </section>
+        <section><h2>{L('processes')}</h2><ul class="check-list two-col">{i.processes.map((x) => <li>{x}</li>)}</ul></section>
+        <section><h2>{L('challenges')}</h2><ul class="check-list">{i.challenges.map((x) => <li>{x}</li>)}</ul></section>
+        <section><h2>{L('systemsFor')}</h2><ProductRows lang={lang} ids={i.productIds} /></section>
+        <section><h2>{L('integration')}</h2><ul class="check-list">{i.integration.map((x) => <li>{x}</li>)}</ul></section>
+        {i.faqs.length > 0 && <section><h2>{L('faq')}</h2><Faq items={i.faqs} /></section>}
+      </div>
+      <aside class="detail-aside">
+        <section><h2>{L('solutions')}</h2>
+          <ul>{i.solutionIds.map((s) => { const x = c.solution(s); return <li><a href={solutionPath(lang, x.slug)}>{x.name}</a></li>; })}</ul></section>
+      </aside>
+    </div>
+  </section>
+  <CtaBand lang={lang} title={h.cta.title} text={h.cta.text} />
+</Base>

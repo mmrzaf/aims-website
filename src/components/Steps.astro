@@ -1,0 +1,11 @@
+---
+interface Props { items: Array<{ title: string; text: string }>; flow?: boolean }
+const { items, flow = false } = Astro.props;
+// Pick a column count that fills every row evenly (6 -> 3 x 2, 8 -> 4 x 2).
+const pick = (n: number) => (n <= 5 ? n : n % 3 === 0 ? 3 : n % 4 === 0 ? 4 : 3);
+const cols = pick(items.length);
+const narrow = items.length % 2 === 0 ? 2 : 1;
+---
+<ol class:list={['steps', { 'steps--flow': flow }]} style={flow ? `--cols:${cols};--narrow:${narrow}` : undefined}>
+  {items.map((s) => <li class="step"><h3>{s.title}</h3><p>{s.text}</p></li>)}
+</ol>

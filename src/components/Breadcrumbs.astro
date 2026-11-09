@@ -1,0 +1,13 @@
+---
+import { t } from '../lib/i18n';
+import { localePath } from '../lib/routes';
+import type { Lang } from '../lib/types';
+interface Props { lang: string; trail: Array<{ label: string; href?: string }> }
+const { lang, trail } = Astro.props;
+const items = [{ label: t(lang as Lang, 'common.home'), href: localePath(lang as Lang) }, ...trail];
+---
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+  <ol>
+    {items.map((it, i) => <li>{it.href && i < items.length - 1 ? <a href={it.href}>{it.label}</a> : <span aria-current="page">{it.label}</span>}</li>)}
+  </ol>
+</nav>

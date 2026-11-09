@@ -1,0 +1,202 @@
+---
+import Brand from './Brand.astro';
+import Icon from './Icon.astro';
+import Arrow from './Arrow.astro';
+import Img from './Img.astro';
+import { getCatalog } from '../lib/catalog';
+import { languages } from '../config/languages';
+import { locales, number, t } from '../lib/i18n';
+import { groupPath, industryPath, localePath, productPath, solutionPath } from '../lib/routes';
+import { groupImages, industryImages } from '../lib/visuals';
+import { solutionIcons, solutionMenu } from '../lib/menu';
+import type { Lang } from '../lib/types';
+
+interface Props { lang: Lang; segments: string[] }
+const { lang, segments } = Astro.props;
+const section = segments[0];
+const c = getCatalog(lang);
+const here = (s: string) => section === s;
+const single = [
+  { key: 'platform', seg: 'platform' },
+  { key: 'howWeWork', seg: 'how-we-work' },
+];
+---
+<header class="site-header" data-site-header>
+  <div class="container header-inner">
+    <Brand lang={lang} />
+    <nav class="primary-nav" id="primary-nav" aria-label={t(lang, 'nav.primary')}>
+      <ul class="nav-list">
+        <li class="nav-item" data-menu>
+          <button class:list={['nav-trigger', { 'is-current': here('software') }]} type="button" aria-expanded="false" aria-controls="mega-software">
+            {t(lang, 'nav.software')}<span class="nav-chevron" aria-hidden="true"></span>
+          </button>
+          <div class="mega-panel" id="mega-software">
+            <div class="mega-inner mega-inner--split">
+              <div class="mega-rail">
+                <p class="mega-eyebrow">{t(lang, 'nav.software')}</p>
+                <p class="mega-lead">{c.pages.software.lead}</p>
+                <a class="text-link" href={localePath(lang, ['software'])}>{t(lang, 'nav.viewAllSoftware')} <Arrow lang={lang} size={16} /></a>
+              </div>
+              <div class="mega-grid mega-grid--4">
+                {c.groups.map((g) => (
+                  <div class="mega-col">
+                    <a class="mega-group" href={groupPath(lang, g.slug)}>
+                      <Img name={groupImages[g.id]} small ratio="3 / 2" class="mega-thumb" />
+                      <span><strong>{g.name}</strong><small>{number(lang, g.productIds.length)} {t(lang, 'common.systems')}</small></span>
+                    </a>
+                    <ul class="mega-items">
+                      {g.productIds.slice(0, 6).map((id) => { const p = c.product(id); return <li><a href={productPath(lang, p)}><span dir="ltr">{p.brand}</span>{p.acronym && <em class="mega-abbr" dir="ltr">{p.acronym}</em>}</a></li>; })}
+                      <li><a class="mega-more" href={groupPath(lang, g.slug)}>{t(lang, 'common.viewAll')} <Arrow lang={lang} size={14} /></a></li>
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </li>
+        <li class="nav-item" data-menu>
+          <button class:list={['nav-trigger', { 'is-current': here('industries') }]} type="button" aria-expanded="false" aria-controls="mega-industries">
+            {t(lang, 'nav.industries')}<span class="nav-chevron" aria-hidden="true"></span>
+          </button>
+          <div class="mega-panel" id="mega-industries">
+            <div class="mega-inner mega-inner--split">
+              <div class="mega-rail">
+                <p class="mega-eyebrow">{t(lang, 'nav.industries')}</p>
+                <p class="mega-lead">{c.pages.industries.lead}</p>
+                <a class="text-link" href={localePath(lang, ['industries'])}>{t(lang, 'nav.viewAllIndustries')} <Arrow lang={lang} size={16} /></a>
+              </div>
+              <div class="mega-grid mega-grid--cards">
+                {c.industries.map((i) => (
+                  <a class="mega-card" href={industryPath(lang, i.slug)}>
+                    <Img name={industryImages[i.id]} small ratio="3 / 2" class="mega-thumb" />
+                    <strong>{i.name}</strong>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+        </li>
+        <li class="nav-item" data-menu>
+          <button class:list={['nav-trigger', { 'is-current': here('solutions') }]} type="button" aria-expanded="false" aria-controls="mega-solutions">
+            {t(lang, 'nav.solutions')}<span class="nav-chevron" aria-hidden="true"></span>
+          </button>
+          <div class="mega-panel" id="mega-solutions">
+            <div class="mega-inner mega-inner--split">
+              <div class="mega-rail">
+                <p class="mega-eyebrow">{t(lang, 'nav.solutions')}</p>
+                <p class="mega-lead">{c.pages.solutions.lead}</p>
+                <a class="text-link" href={localePath(lang, ['solutions'])}>{t(lang, 'nav.viewAllSolutions')} <Arrow lang={lang} size={16} /></a>
+              </div>
+              <div class="mega-grid mega-grid--solutions">
+                {solutionMenu.map((g) => (
+                  <div class="mega-col" data-tone={g.tone}>
+                    <p class="mega-col__title">{t(lang, `nav.solutionGroups.${g.key}`)}</p>
+                    <ul class="mega-solutions">
+                      {g.ids.map((id) => { const s = c.solutions.find((x) => x.id === id)!; return <li><a href={solutionPath(lang, s.slug)}><span class="mega-icon"><Icon name={solutionIcons[id]} size={18} /></span><span>{s.name}</span></a></li>; })}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </li>
+        {single.map((s) => (
+          <li><a class:list={['nav-link', { 'is-current': here(s.seg) }]} href={localePath(lang, [s.seg])}>{t(lang, `nav.${s.key}`)}</a></li>
+        ))}
+      </ul>
+      <div class="mobile-actions">
+        <a class="button button--primary" href={localePath(lang, ['contact'])}>{t(lang, 'nav.talk')}</a>
+      </div>
+    </nav>
+    <div class="header-actions">
+      <a class="icon-button" href={localePath(lang, ['search'])} aria-label={t(lang, 'nav.search')}><Icon name="search" /></a>
+      <details class="lang-menu" data-lang-menu>
+        <summary class="icon-button" aria-label={t(lang, 'nav.language')} title={t(lang, 'nav.language')}><Icon name="globe" /></summary>
+        <ul class="lang-menu__list">
+          {locales.map((l) => <li><a href={localePath(l, segments)} hreflang={l} lang={l} aria-current={l === lang ? 'true' : undefined}>{languages[l].name}</a></li>)}
+        </ul>
+      </details>
+      <a class="button button--primary button--small" href={localePath(lang, ['contact'])}>{t(lang, 'nav.talk')}</a>
+    </div>
+    <button class="icon-button mobile-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label={t(lang, 'nav.menu')} data-label-open={t(lang, 'nav.menu')} data-label-close={t(lang, 'nav.close')}>
+      <span class="burger" aria-hidden="true"><i></i><i></i><i></i></span>
+    </button>
+  </div>
+  <div class="nav-scrim" data-scrim aria-hidden="true"></div>
+</header>
+<script>
+  const langMenu = document.querySelector<HTMLDetailsElement>('[data-lang-menu]');
+  if (langMenu) {
+    document.addEventListener('click', (e) => { if (!langMenu.contains(e.target as Node)) langMenu.open = false; });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') langMenu.open = false; });
+  }
+</script>
+<script>
+  const header = document.querySelector<HTMLElement>('[data-site-header]');
+  if (header) {
+    const items = [...header.querySelectorAll<HTMLElement>('[data-menu]')];
+    const toggle = header.querySelector<HTMLButtonElement>('.mobile-toggle')!;
+    const mobile = window.matchMedia('(max-width: 1080px)');
+    const timers = new Map<HTMLElement, number>();
+
+    const sync = () => {
+      const anyOpen = items.some((i) => i.hasAttribute('data-open'));
+      if (anyOpen) header.setAttribute('data-menu-open', ''); else header.removeAttribute('data-menu-open');
+    };
+    const setOpen = (item: HTMLElement, open: boolean) => {
+      const btn = item.querySelector<HTMLButtonElement>('.nav-trigger')!;
+      if (open) item.setAttribute('data-open', ''); else item.removeAttribute('data-open');
+      btn.setAttribute('aria-expanded', String(open));
+      sync();
+    };
+    const closeAll = (except?: HTMLElement) => items.forEach((i) => { if (i !== except) setOpen(i, false); });
+
+    let warmed = false;
+    const warm = () => {
+      if (warmed) return; warmed = true;
+      header.querySelectorAll<HTMLImageElement>('.mega-panel img[loading=lazy]').forEach((img) => { img.loading = 'eager'; });
+    };
+    header.addEventListener('pointerenter', warm, { once: true });
+    header.addEventListener('focusin', warm, { once: true });
+
+    items.forEach((item) => {
+      const btn = item.querySelector<HTMLButtonElement>('.nav-trigger')!;
+      btn.addEventListener('click', () => { const open = !item.hasAttribute('data-open'); closeAll(item); setOpen(item, open); });
+      item.addEventListener('pointerenter', (e) => {
+        if (mobile.matches || e.pointerType === 'touch') return;
+        window.clearTimeout(timers.get(item)); closeAll(item); setOpen(item, true);
+      });
+      item.addEventListener('pointerleave', (e) => {
+        if (mobile.matches || e.pointerType === 'touch') return;
+        timers.set(item, window.setTimeout(() => setOpen(item, false), 140));
+      });
+      item.addEventListener('focusout', (e) => {
+        if (!item.contains((e as FocusEvent).relatedTarget as Node) && !mobile.matches) setOpen(item, false);
+      });
+    });
+
+    toggle.addEventListener('click', () => {
+      const open = !header.hasAttribute('data-mobile-open');
+      if (open) header.setAttribute('data-mobile-open', ''); else header.removeAttribute('data-mobile-open');
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.setAttribute('aria-label', toggle.dataset[open ? 'labelClose' : 'labelOpen']!);
+      document.body.style.overflow = open ? 'hidden' : '';
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const openItem = items.find((i) => i.hasAttribute('data-open'));
+      closeAll();
+      if (openItem && !mobile.matches) openItem.querySelector<HTMLButtonElement>('.nav-trigger')!.focus();
+      if (header.hasAttribute('data-mobile-open')) toggle.click();
+    });
+    document.addEventListener('click', (e) => { if (!header.contains(e.target as Node)) closeAll(); });
+    header.querySelector('[data-scrim]')!.addEventListener('click', () => closeAll());
+    mobile.addEventListener('change', () => {
+      closeAll(); header.removeAttribute('data-mobile-open'); document.body.style.overflow = '';
+      toggle.setAttribute('aria-expanded', 'false');
+    });
+
+    const onScroll = () => { if (window.scrollY > 4) header.setAttribute('data-scrolled', ''); else header.removeAttribute('data-scrolled'); };
+    onScroll(); window.addEventListener('scroll', onScroll, { passive: true });
+  }
+</script>
