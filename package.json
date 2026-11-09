@@ -1,0 +1,25 @@
+{
+  "name": "aims-website",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Brand-neutral bilingual enterprise software catalogue website.",
+  "scripts": {
+    "dev": "astro dev",
+    "verify": "node scripts/verify-content.mjs",
+    "images": "node scripts/process-images.mjs",
+    "build": "node scripts/verify-content.mjs && astro build && pagefind --site dist",
+    "preview": "astro preview",
+    "check-links": "node scripts/check-links.mjs"
+  },
+  "engines": {
+    "node": ">=22.23.4"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.4",
+    "@fontsource-variable/vazirmatn": "^5.3.0",
+    "@fontsource/ibm-plex-sans": "^5.3.0",
+    "astro": "^7.4.5",
+    "pagefind": "^1.6.0"
+  }
+}
