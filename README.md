@@ -68,6 +68,8 @@ One-time server setup:
 
 Company name, site URL and contact channels are build-time values: set them under `env` and `targets` in `.gitman.yml`.
 
+The GitHub Action `.github/workflows/image.yml` builds the same `Dockerfile` on every push to `main` and pushes it to `ghcr.io/<owner>/<repo>` (tags `latest` and `sha-<commit>`). It takes `cerv` from `ghcr.io/mmrzaf/cerv:1.0` and the npm registry from npmjs. Build-time values come from repository variables of the same name as in `.env.example`; `PUBLIC_SITE_URL` defaults to `https://aimco.kdns.fr`.
+
 To build locally:
 
 ```bash
