@@ -45,7 +45,7 @@ jobs:
           build-args: |
             CERV_IMAGE=${{ env.CERV_IMAGE }}
             NPM_REGISTRY=${{ env.NPM_REGISTRY }}
-            PUBLIC_SITE_URL=${{ vars.PUBLIC_SITE_URL || 'https://aimco.kdns.fr' }}
+            PUBLIC_SITE_URL=${{ vars.PUBLIC_SITE_URL || 'https://aimsco.kdns.fr' }}
             PUBLIC_CONTACT_EMAIL=${{ vars.PUBLIC_CONTACT_EMAIL }}
             PUBLIC_CONTACT_PHONE=${{ vars.PUBLIC_CONTACT_PHONE }}
             PUBLIC_CONTACT_WHATSAPP=${{ vars.PUBLIC_CONTACT_WHATSAPP }}
